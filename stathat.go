@@ -11,13 +11,12 @@ package stathat
 
 import (
 	"fmt"
-	"http"
 	"io/ioutil"
 	"log"
-	"os"
+	"net/http"
+	"net/url"
 	"strconv"
 	"time"
-	"url"
 )
 
 type statKind int
@@ -92,35 +91,35 @@ func init() {
 }
 
 // Using the classic API, posts a count to a stat.
-func PostCount(statKey, userKey string, count int) os.Error {
+func PostCount(statKey, userKey string, count int) error {
 	statReportChannel <- newClassicStatCount(statKey, userKey, count)
 	return nil
 }
 
 // Using the classic API, posts a count of 1 to a stat.
-func PostCountOne(statKey, userKey string) os.Error {
+func PostCountOne(statKey, userKey string) error {
 	return PostCount(statKey, userKey, 1)
 }
 
 // Using the classic API, posts a value to a stat.
-func PostValue(statKey, userKey string, value float64) os.Error {
+func PostValue(statKey, userKey string, value float64) error {
 	statReportChannel <- newClassicStatValue(statKey, userKey, value)
 	return nil
 }
 
 // Using the EZ API, posts a count of 1 to a stat.
-func PostEZCountOne(statName, email string) os.Error {
+func PostEZCountOne(statName, email string) error {
 	return PostEZCount(statName, email, 1)
 }
 
 // Using the EZ API, posts a count to a stat.
-func PostEZCount(statName, email string, count int) os.Error {
+func PostEZCount(statName, email string, count int) error {
 	statReportChannel <- newEZStatCount(statName, email, count)
 	return nil
 }
 
 // Using the EZ API, posts a value to a stat.
-func PostEZValue(statName, email string, value float64) os.Error {
+func PostEZValue(statName, email string, value float64) error {
 	statReportChannel <- newEZStatValue(statName, email, value)
 	return nil
 }
@@ -227,7 +226,7 @@ func (sr *statReport) classicValueValues() url.Values {
 }
 
 func (sr *statReport) valueString() string {
-	return strconv.Ftoa64(sr.Value, 'g', -1)
+	return strconv.FormatFloat(sr.Value, 'g', -1, 64)
 }
 
 func (sr *statReport) path() string {
@@ -247,9 +246,9 @@ func processStats() {
 			break
 		}
 
-                if Verbose {
-                        log.Printf("posting stat to stathat: %s, %v", sr.url(), sr.values())
-                }
+		if Verbose {
+			log.Printf("posting stat to stathat: %s, %v", sr.url(), sr.values())
+		}
 
 		if testingEnv {
 			testPostChannel <- &testPost{sr.url(), sr.values()}
@@ -262,10 +261,10 @@ func processStats() {
 			continue
 		}
 
-                if Verbose {
-                        body, _ := ioutil.ReadAll(r.Body)
-                        log.Printf("stathat post result: %s", body)
-                }
+		if Verbose {
+			body, _ := ioutil.ReadAll(r.Body)
+			log.Printf("stathat post result: %s", body)
+		}
 
 		r.Body.Close()
 	}
