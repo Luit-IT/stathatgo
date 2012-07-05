@@ -277,7 +277,8 @@ func WaitForClose(timeout int64) bool {
 	select {
 	case <-done:
 		return true
-	case <-time.After(timeout):
+	case <-time.After(time.Duration(timeout)):
 		return false
 	}
+	panic("satisfy compiler, should not be here")
 }
